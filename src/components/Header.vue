@@ -24,14 +24,6 @@
             Estimation List
           </router-link>
         </nav>
-
-        <!-- User Section (Optional) -->
-        <div class="flex items-center space-x-3">
-          <span class="text-sm text-gray-600">Admin</span>
-          <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-            <span class="text-white text-xs font-medium">A</span>
-          </div>
-        </div>
       </div>
     </div>
   </header>

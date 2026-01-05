@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50 p-6">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-6 border-b border-gray-300 pb-4">
         <h1 class="text-2xl font-semibold text-gray-800">Procurement Console</h1>
@@ -170,7 +170,12 @@
                   class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Spec</option>
-                  <option v-for="spec in filteredSpecs" :key="spec._id" :value="spec._id">
+                  <option
+                    v-for="spec in filteredSpecs"
+                    :key="spec._id"
+                    :value="spec._id"
+                    :title="spec.name"
+                  >
                     {{ spec.name }}
                   </option>
                 </select>
@@ -494,7 +499,7 @@
     <!-- Add Entry Dialog -->
     <div
       v-if="showDialog"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-white/10 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-white/10"
     >
       <div class="bg-white rounded shadow-lg w-96 p-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Add New {{ dialogType }}</h3>
