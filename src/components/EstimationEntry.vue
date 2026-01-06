@@ -356,8 +356,10 @@
                         <option value="Ton">Ton</option>
                         <option value="Bag">Bag</option>
                         <option value="Nos">Nos</option>
+                        <option value="Sqft">Sqft</option>
                         <option value="Sqm">Sqm</option>
                         <option value="Cum">Cum</option>
+                        <option value="Rft">Rft</option>
                         <option value="Rmt">Rmt</option>
                         <option value="Ltr">Ltr</option>
                       </select>
@@ -645,7 +647,7 @@
     <!-- Add Entry Dialog -->
     <div
       v-if="showDialog"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-white/10 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-white/10"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-white/10 backdrop-blur-md backdrop-saturate-150 supports-backdrop-filter:bg-white/10"
     >
       <div class="bg-white rounded shadow-lg w-96 p-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Add New {{ dialogType }}</h3>
@@ -941,7 +943,9 @@ export default {
             categoryId: this.selectedCategory,
           })
           if (response.success) {
+            this.fetchSubcategories()
             this.subcategories.push(response.data)
+
             this.showSuccess('Subcategory added successfully')
           }
         } else if (this.dialogType === 'spec') {
@@ -950,6 +954,7 @@ export default {
             subcategoryId: this.selectedSubcategory,
           })
           if (response.success) {
+            this.fetchSpecs()
             this.specs.push(response.data)
             this.showSuccess('Specification added successfully')
           }

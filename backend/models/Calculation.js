@@ -14,7 +14,7 @@ const materialLineSchema = new mongoose.Schema({
   uom: {
     type: String,
     required: true,
-    enum: ['Kg', 'Ton', 'Bag', 'Nos', 'Sqm', 'Cum', 'Rmt', 'Ltr'],
+    enum: ['Kg', 'Ton', 'Bag', 'Nos', 'Sqm', 'Sqft', 'Rft', 'Cum', 'Rmt', 'Ltr'],
   },
   rate: {
     type: Number,
