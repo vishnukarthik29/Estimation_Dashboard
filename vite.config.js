@@ -14,6 +14,13 @@ export default defineConfig({
     },
   },
   server: {
+    proxy: {
+      '/backend/api': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace('/backend/api', '/api'),
+      },
+    },
     allowedHosts: ['shomli.in', 'www.shomli.in'],
   },
 })
