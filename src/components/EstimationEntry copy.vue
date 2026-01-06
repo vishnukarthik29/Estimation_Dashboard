@@ -176,6 +176,7 @@
                     :value="spec._id"
                     :title="spec.name"
                   >
+                    <!-- {{ spec.name }} -->
                     {{ spec.name.length > 40 ? spec.name.slice(0, 40) + '…' : spec.name }}
                   </option>
                 </select>
@@ -202,7 +203,6 @@
             </div>
           </div>
         </div>
-
         <!-- Selected Spec Full Name -->
         <div v-if="selectedSpecObject" class="mt-2 text-xs text-gray-600">
           <span class="font-medium text-gray-700">Selected Spec:</span>
@@ -413,153 +413,19 @@
             </div>
           </div>
 
-          <!-- Labour Calculation Mode -->
-          <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
-            <label class="block text-xs font-medium text-gray-600 mb-2"
-              >Labour Calculation Mode</label
-            >
-            <div class="flex gap-4">
-              <label class="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  v-model="labourCalculationMode"
-                  value="calculated"
-                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span class="ml-2 text-sm text-gray-700">Calculate from Line Items</span>
-              </label>
-              <label class="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  v-model="labourCalculationMode"
-                  value="manual"
-                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span class="ml-2 text-sm text-gray-700">Manual Entry</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Manual Labour Amount Input -->
-          <div v-if="labourCalculationMode === 'manual'" class="mb-6">
-            <label class="block text-xs font-medium text-gray-600 mb-2">Labour Amount</label>
-            <input
-              type="number"
-              v-model.number="manualLabourAmount"
-              class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="0.00"
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          <!-- Labour Line Items -->
-          <div v-if="labourCalculationMode === 'calculated'" class="mb-6">
-            <div class="flex justify-between items-center mb-3">
-              <label class="block text-xs font-medium text-gray-600">Labour Line Items</label>
-              <button
-                @click="addLabourLine"
-                class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition"
-              >
-                + Add Labour
-              </button>
-            </div>
-
-            <!-- Labour Table -->
-            <div class="border border-gray-300 rounded overflow-hidden">
-              <table class="w-full text-sm">
-                <thead class="bg-gray-100 border-b border-gray-300">
-                  <tr>
-                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-700 w-[40%]">
-                      Description
-                    </th>
-                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-700 w-[20%]">
-                      Quantity
-                    </th>
-                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-700 w-[20%]">
-                      Rate
-                    </th>
-                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-700 w-[15%]">
-                      Amount
-                    </th>
-                    <th class="px-3 py-2 w-[5%]"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(line, index) in labourLines"
-                    :key="index"
-                    class="border-b border-gray-200"
-                  >
-                    <td class="px-3 py-2">
-                      <input
-                        type="text"
-                        v-model="line.description"
-                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="Enter description"
-                      />
-                    </td>
-                    <td class="px-3 py-2">
-                      <input
-                        type="number"
-                        v-model.number="line.quantity"
-                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="0"
-                        min="0"
-                        step="0.01"
-                      />
-                    </td>
-                    <td class="px-3 py-2">
-                      <input
-                        type="number"
-                        v-model.number="line.rate"
-                        class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="0.00"
-                        min="0"
-                        step="0.01"
-                      />
-                    </td>
-                    <td class="px-3 py-2">
-                      <span class="text-gray-800 font-medium"
-                        >₹{{ labourLineAmount(line).toFixed(2) }}</span
-                      >
-                    </td>
-                    <td class="px-3 py-2 text-center">
-                      <button
-                        @click="removeLabourLine(index)"
-                        class="text-red-600 hover:text-red-800"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="labourLines.length === 0">
-                    <td colspan="5" class="px-3 py-6 text-center text-gray-500 text-sm">
-                      No labour items added. Click "+ Add Labour" to begin.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Total Labour -->
-            <div class="mt-2 flex justify-end">
-              <div class="text-sm">
-                <span class="text-gray-600">Total Labour: </span>
-                <span class="font-semibold text-gray-800">₹{{ totalLabourAmount.toFixed(2) }}</span>
-              </div>
-            </div>
-          </div>
-
           <!-- Cost Inputs -->
-          <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-2">Labour Amount</label>
+              <input
+                type="number"
+                v-model.number="labourAmount"
+                class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+              />
+            </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-2">Transport Amount</label>
               <input
@@ -600,14 +466,8 @@
                 <span class="font-medium text-gray-800">₹{{ totalMaterialAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600">
-                  {{
-                    labourCalculationMode === 'calculated'
-                      ? 'Total Labour (Calculated):'
-                      : 'Labour Amount (Manual):'
-                  }}
-                </span>
-                <span class="font-medium text-gray-800">₹{{ totalLabourAmount.toFixed(2) }}</span>
+                <span class="text-gray-600">Labour:</span>
+                <span class="font-medium text-gray-800">₹{{ labourAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">Transport:</span>
@@ -699,9 +559,7 @@ export default {
       materialCalculationMode: 'calculated',
       manualMaterialAmount: 0,
       materialLines: [],
-      labourCalculationMode: 'calculated',
-      manualLabourAmount: 0,
-      labourLines: [],
+      labourAmount: 0,
       transportAmount: 0,
       pmcSafetyPercentage: 0,
 
@@ -719,6 +577,7 @@ export default {
 
   computed: {
     filteredSubcategories() {
+      console.log(this.selectedCategory)
       if (!this.selectedCategory) return []
       return this.subcategories.filter((sub) => sub.categoryId === this.selectedCategory)
     },
@@ -735,15 +594,8 @@ export default {
       return this.materialLines.reduce((sum, line) => sum + this.lineAmount(line), 0)
     },
 
-    totalLabourAmount() {
-      if (this.labourCalculationMode === 'manual') {
-        return this.manualLabourAmount
-      }
-      return this.labourLines.reduce((sum, line) => sum + this.labourLineAmount(line), 0)
-    },
-
     subtotalForPMC() {
-      return this.totalMaterialAmount + this.totalLabourAmount + this.transportAmount
+      return this.totalMaterialAmount + this.labourAmount + this.transportAmount
     },
 
     pmcSafetyAmount() {
@@ -757,7 +609,6 @@ export default {
     canSaveCalculation() {
       return this.selectedCategory && this.selectedSubcategory && this.selectedSpec
     },
-
     selectedSpecObject() {
       return this.specs.find((s) => s._id === this.selectedSpec) || null
     },
@@ -807,10 +658,12 @@ export default {
       this.selectedSubcategory = ''
       this.selectedSpec = ''
 
+      // Optionally fetch filtered subcategories
       if (this.selectedCategory) {
         try {
           const response = await subcategoryAPI.getAll(this.selectedCategory)
           this.subcategories = response.data
+          console.log('This subcateogires', this.subcategories)
         } catch (error) {
           console.error('Error fetching filtered subcategories:', error)
         }
@@ -820,6 +673,7 @@ export default {
     async onSubcategoryChange() {
       this.selectedSpec = ''
 
+      // Optionally fetch filtered specs
       if (this.selectedSubcategory) {
         try {
           const response = await specAPI.getAll(this.selectedSubcategory)
@@ -854,22 +708,6 @@ export default {
       return (line.quantity || 0) * (line.rate || 0)
     },
 
-    addLabourLine() {
-      this.labourLines.push({
-        description: '',
-        quantity: 0,
-        rate: 0,
-      })
-    },
-
-    removeLabourLine(index) {
-      this.labourLines.splice(index, 1)
-    },
-
-    labourLineAmount(line) {
-      return (line.quantity || 0) * (line.rate || 0)
-    },
-
     async saveCalculation() {
       if (!this.canSaveCalculation) {
         this.showError('Please select Category, Subcategory, and Specification')
@@ -887,9 +725,7 @@ export default {
           materialCalculationMode: this.materialCalculationMode,
           manualMaterialAmount: this.manualMaterialAmount,
           materialLines: this.materialLines,
-          labourCalculationMode: this.labourCalculationMode,
-          manualLabourAmount: this.manualLabourAmount,
-          labourLines: this.labourLines,
+          labourAmount: this.labourAmount,
           transportAmount: this.transportAmount,
           pmcSafetyPercentage: this.pmcSafetyPercentage,
         }
@@ -898,6 +734,7 @@ export default {
 
         if (response.success) {
           this.showSuccess('Calculation saved successfully!')
+          // Optionally reset the form
           this.resetCalculationForm()
         }
       } catch (error) {
@@ -985,9 +822,7 @@ export default {
       this.materialCalculationMode = 'calculated'
       this.manualMaterialAmount = 0
       this.materialLines = []
-      this.labourCalculationMode = 'calculated'
-      this.manualLabourAmount = 0
-      this.labourLines = []
+      this.labourAmount = 0
       this.transportAmount = 0
       this.pmcSafetyPercentage = 0
     },
@@ -997,6 +832,7 @@ export default {
   // LIFECYCLE HOOKS
   // ==========================================
   async mounted() {
+    // Fetch initial data from backend
     await Promise.all([this.fetchCategories(), this.fetchSubcategories(), this.fetchSpecs()])
   },
 }

@@ -28,6 +28,29 @@ const materialLineSchema = new mongoose.Schema({
   },
 })
 
+const labourLineSchema = new mongoose.Schema({
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  rate: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  amount: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+})
+
 const calculationSchema = new mongoose.Schema(
   {
     categoryId: {
@@ -66,10 +89,27 @@ const calculationSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    labourAmount: {
+    // labourAmount: {
+    //   type: Number,
+    //   required: true,
+    //   default: 0,
+    //   min: 0,
+    // },
+    // Add to calculationSchema:
+    labourCalculationMode: {
+      type: String,
+      enum: ['calculated', 'manual'],
+      default: 'calculated',
+    },
+    manualLabourAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    labourLines: [labourLineSchema],
+    totalLabourAmount: {
       type: Number,
       required: true,
-      default: 0,
       min: 0,
     },
     transportAmount: {
