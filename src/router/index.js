@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import MainLayout from '@/main.vue'
 import EstimationEntry from '@/components/EstimationEntry.vue'
 import EstimationList from '@/components/EstimationList.vue'
+import EstimationEdit from '@/components/EstimationEdit.vue'
+import EstimationEditList from '@/components/EstimationEditList.vue'
 
 const routes = [
   {
@@ -10,7 +12,7 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/estimation-entry',
+        redirect: '/estimation-list',
       },
       {
         path: '/estimation-entry',
@@ -21,6 +23,16 @@ const routes = [
         path: '/estimation-list',
         name: 'EstimationList',
         component: EstimationList,
+      },
+      {
+        path: '/estimation-edit-list',
+        name: 'EstimationEditList',
+        component: EstimationEditList,
+      },
+      {
+        path: '/estimation-edit',
+        name: 'EstimationEdit',
+        component: EstimationEdit,
       },
     ],
   },

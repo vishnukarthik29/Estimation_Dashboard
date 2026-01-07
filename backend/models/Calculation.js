@@ -118,6 +118,18 @@ const calculationSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    adminCostPercentage: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    adminCostAmount: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     pmcSafetyPercentage: {
       type: Number,
       required: true,

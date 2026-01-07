@@ -3,8 +3,18 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-6 border-b border-gray-300 pb-4">
-        <h1 class="text-2xl font-semibold text-gray-800">Procurement Console</h1>
-        <p class="text-sm text-gray-600 mt-1">Category Management & Cost Calculator</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold text-gray-800">Edit Calculation</h1>
+            <p class="text-sm text-gray-600 mt-1">Modify rates and quantities</p>
+          </div>
+          <button
+            @click="goBack"
+            class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition text-sm"
+          >
+            ← Back
+          </button>
+        </div>
       </div>
 
       <!-- Loading Overlay -->
@@ -79,175 +89,48 @@
         </div>
       </div>
 
-      <!-- Main Console -->
-      <div class="bg-white border border-gray-300 rounded shadow-sm p-6">
-        <!-- Cascading Dropdowns Section -->
+      <!-- Main Content -->
+      <div v-if="calculation" class="bg-white border border-gray-300 rounded shadow-sm p-6">
+        <!-- Load Rates Panel -->
+
+        <!-- Calculation Info -->
+        <div class="mb-8 p-4 bg-blue-50 border border-blue-200 rounded">
+          <h2 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">
+            Current Calculation Details
+          </h2>
+          <div class="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span class="text-gray-600">Category:</span>
+              <span class="ml-2 font-medium text-gray-800">{{
+                calculation.categoryId.name || 'N/A'
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Subcategory:</span>
+              <span class="ml-2 font-medium text-gray-800">{{
+                calculation.subcategoryId?.name || 'N/A'
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Specification:</span>
+              <span class="ml-2 font-medium text-gray-800">{{
+                calculation.specId?.name || 'N/A'
+              }}</span>
+            </div>
+          </div>
+          <div class="mt-2 text-sm">
+            <span class="text-gray-600">Type:</span>
+            <span class="ml-2 font-medium text-gray-800 capitalize">{{ calculation.type }}</span>
+          </div>
+        </div>
+
+        <!-- Material Section -->
         <div class="mb-8">
           <h2 class="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">
-            Catalog Structure
+            Material Cost
           </h2>
 
-          <div class="grid grid-cols-3 gap-4">
-            <!-- Category Dropdown -->
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-2">Category</label>
-              <div class="flex gap-2">
-                <select
-                  v-model="selectedCategory"
-                  @change="onCategoryChange"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Select Category</option>
-                  <option v-for="cat in categories" :key="cat._id" :value="cat._id">
-                    {{ cat.name }}
-                  </option>
-                </select>
-                <button
-                  @click="showAddDialog('category')"
-                  class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 transition"
-                >
-                  <svg
-                    class="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Subcategory Dropdown -->
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-2">Subcategory</label>
-              <div class="flex gap-2">
-                <select
-                  v-model="selectedSubcategory"
-                  @change="onSubcategoryChange"
-                  :disabled="!selectedCategory"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Subcategory</option>
-                  <option v-for="sub in filteredSubcategories" :key="sub._id" :value="sub._id">
-                    {{ sub.name }}
-                  </option>
-                </select>
-                <button
-                  @click="showAddDialog('subcategory')"
-                  :disabled="!selectedCategory"
-                  class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg
-                    class="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Specs Dropdown -->
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-2">Specification</label>
-              <div class="flex gap-2">
-                <select
-                  v-model="selectedSpec"
-                  :disabled="!selectedSubcategory"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Spec</option>
-                  <option
-                    v-for="spec in filteredSpecs"
-                    :key="spec._id"
-                    :value="spec._id"
-                    :title="spec.name"
-                  >
-                    {{ spec.name.length > 40 ? spec.name.slice(0, 40) + '…' : spec.name }}
-                  </option>
-                </select>
-                <button
-                  @click="showAddDialog('spec')"
-                  :disabled="!selectedSubcategory"
-                  class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg
-                    class="w-4 h-4 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Selected Spec Full Name -->
-        <div v-if="selectedSpecObject" class="mt-2 text-xs text-gray-600">
-          <span class="font-medium text-gray-700">Selected Spec:</span>
-          <span class="ml-1">{{ selectedSpecObject.name }}</span>
-        </div>
-
-        <!-- Divider -->
-        <div class="border-t border-gray-200 my-6"></div>
-
-        <!-- Cost Calculation Section -->
-        <div>
-          <h2 class="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">
-            Cost Calculation
-          </h2>
-
-          <!-- Material / Subcontractor Toggle -->
-          <div class="mb-6">
-            <label class="block text-xs font-medium text-gray-600 mb-2">Type</label>
-            <div class="flex gap-3">
-              <button
-                @click="setType('material')"
-                :class="[
-                  'px-6 py-2 border rounded text-sm font-medium transition',
-                  calculationType === 'material'
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
-                ]"
-              >
-                Material
-              </button>
-              <button
-                @click="setType('subcontractor')"
-                :class="[
-                  'px-6 py-2 border rounded text-sm font-medium transition',
-                  calculationType === 'subcontractor'
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
-                ]"
-              >
-                Subcontractor
-              </button>
-            </div>
-          </div>
-
-          <!-- Material Calculation Mode -->
+          <!-- Material Mode Toggle -->
           <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
             <label class="block text-xs font-medium text-gray-600 mb-2"
               >Material Calculation Mode</label
@@ -256,7 +139,7 @@
               <label class="flex items-center cursor-pointer">
                 <input
                   type="radio"
-                  v-model="materialCalculationMode"
+                  v-model="calculation.materialCalculationMode"
                   value="calculated"
                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
@@ -265,7 +148,7 @@
               <label class="flex items-center cursor-pointer">
                 <input
                   type="radio"
-                  v-model="materialCalculationMode"
+                  v-model="calculation.materialCalculationMode"
                   value="manual"
                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
@@ -274,12 +157,12 @@
             </div>
           </div>
 
-          <!-- Manual Material Amount Input -->
-          <div v-if="materialCalculationMode === 'manual'" class="mb-6">
+          <!-- Manual Material Input -->
+          <div v-if="calculation.materialCalculationMode === 'manual'" class="mb-6">
             <label class="block text-xs font-medium text-gray-600 mb-2">Material Amount</label>
             <input
               type="number"
-              v-model.number="manualMaterialAmount"
+              v-model.number="calculation.manualMaterialAmount"
               class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="0.00"
               min="0"
@@ -288,7 +171,7 @@
           </div>
 
           <!-- Material Line Items -->
-          <div v-if="materialCalculationMode === 'calculated'" class="mb-6">
+          <div v-if="calculation.materialCalculationMode === 'calculated'">
             <div class="flex justify-between items-center mb-3">
               <label class="block text-xs font-medium text-gray-600">Material Line Items</label>
               <button
@@ -324,7 +207,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(line, index) in materialLines"
+                    v-for="(line, index) in calculation.materialLines"
                     :key="index"
                     class="border-b border-gray-200"
                   >
@@ -376,7 +259,7 @@
                     </td>
                     <td class="px-3 py-2">
                       <span class="text-gray-800 font-medium"
-                        >₹{{ lineAmount(line).toFixed(2) }}</span
+                        >₹{{ calculateLineAmount(line).toFixed(2) }}</span
                       >
                     </td>
                     <td class="px-3 py-2 text-center">
@@ -395,7 +278,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr v-if="materialLines.length === 0">
+                  <tr v-if="calculation.materialLines.length === 0">
                     <td colspan="6" class="px-3 py-6 text-center text-gray-500 text-sm">
                       No materials added. Click "+ Add Material" to begin.
                     </td>
@@ -409,13 +292,23 @@
               <div class="text-sm">
                 <span class="text-gray-600">Total Materials: </span>
                 <span class="font-semibold text-gray-800"
-                  >₹{{ totalMaterialAmount.toFixed(2) }}</span
+                  >₹{{ calculatedMaterialTotal.toFixed(2) }}</span
                 >
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Labour Calculation Mode -->
+        <!-- Divider -->
+        <div class="border-t border-gray-200 my-6"></div>
+
+        <!-- Labour Section -->
+        <div class="mb-8">
+          <h2 class="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">
+            Labour Cost
+          </h2>
+
+          <!-- Labour Mode Toggle -->
           <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
             <label class="block text-xs font-medium text-gray-600 mb-2"
               >Labour Calculation Mode</label
@@ -424,7 +317,7 @@
               <label class="flex items-center cursor-pointer">
                 <input
                   type="radio"
-                  v-model="labourCalculationMode"
+                  v-model="calculation.labourCalculationMode"
                   value="calculated"
                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
@@ -433,7 +326,7 @@
               <label class="flex items-center cursor-pointer">
                 <input
                   type="radio"
-                  v-model="labourCalculationMode"
+                  v-model="calculation.labourCalculationMode"
                   value="manual"
                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
@@ -442,12 +335,12 @@
             </div>
           </div>
 
-          <!-- Manual Labour Amount Input -->
-          <div v-if="labourCalculationMode === 'manual'" class="mb-6">
+          <!-- Manual Labour Input -->
+          <div v-if="calculation.labourCalculationMode === 'manual'" class="mb-6">
             <label class="block text-xs font-medium text-gray-600 mb-2">Labour Amount</label>
             <input
               type="number"
-              v-model.number="manualLabourAmount"
+              v-model.number="calculation.manualLabourAmount"
               class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="0.00"
               min="0"
@@ -456,7 +349,7 @@
           </div>
 
           <!-- Labour Line Items -->
-          <div v-if="labourCalculationMode === 'calculated'" class="mb-6">
+          <div v-if="calculation.labourCalculationMode === 'calculated'">
             <div class="flex justify-between items-center mb-3">
               <label class="block text-xs font-medium text-gray-600">Labour Line Items</label>
               <button
@@ -489,7 +382,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(line, index) in labourLines"
+                    v-for="(line, index) in calculation.labourLines"
                     :key="index"
                     class="border-b border-gray-200"
                   >
@@ -523,7 +416,7 @@
                     </td>
                     <td class="px-3 py-2">
                       <span class="text-gray-800 font-medium"
-                        >₹{{ labourLineAmount(line).toFixed(2) }}</span
+                        >₹{{ calculateLabourLineAmount(line).toFixed(2) }}</span
                       >
                     </td>
                     <td class="px-3 py-2 text-center">
@@ -542,7 +435,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr v-if="labourLines.length === 0">
+                  <tr v-if="calculation.labourLines.length === 0">
                     <td colspan="5" class="px-3 py-6 text-center text-gray-500 text-sm">
                       No labour items added. Click "+ Add Labour" to begin.
                     </td>
@@ -555,18 +448,29 @@
             <div class="mt-2 flex justify-end">
               <div class="text-sm">
                 <span class="text-gray-600">Total Labour: </span>
-                <span class="font-semibold text-gray-800">₹{{ totalLabourAmount.toFixed(2) }}</span>
+                <span class="font-semibold text-gray-800"
+                  >₹{{ calculatedLabourTotal.toFixed(2) }}</span
+                >
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Cost Inputs -->
-          <div class="grid grid-cols-2 gap-4 mb-6">
+        <!-- Divider -->
+        <div class="border-t border-gray-200 my-6"></div>
+
+        <!-- Other Costs -->
+        <div class="mb-8">
+          <h2 class="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">
+            Additional Costs
+          </h2>
+
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-2">Transport Amount</label>
               <input
                 type="number"
-                v-model.number="transportAmount"
+                v-model.number="calculation.transportAmount"
                 class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="0.00"
                 min="0"
@@ -577,7 +481,7 @@
               <label class="block text-xs font-medium text-gray-600 mb-2">PMC Safety (%)</label>
               <input
                 type="number"
-                v-model.number="pmcSafetyPercentage"
+                v-model.number="calculation.pmcSafetyPercentage"
                 class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="0"
                 min="0"
@@ -587,11 +491,11 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-2"
-                >Adminstrative Cost (%)</label
+                >Administrative Cost (%)</label
               >
               <input
                 type="number"
-                v-model.number="adminCostPercentage"
+                v-model.number="calculation.adminCostPercentage"
                 class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="0"
                 min="0"
@@ -600,96 +504,126 @@
               />
             </div>
           </div>
+        </div>
 
-          <!-- Calculation Summary -->
-          <div class="bg-gray-50 border border-gray-200 rounded p-4">
-            <h3 class="text-xs font-medium text-gray-700 mb-3 uppercase tracking-wide">Summary</h3>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-600">
-                  {{
-                    materialCalculationMode === 'calculated'
-                      ? 'Total Materials (Calculated):'
-                      : 'Material Amount (Manual):'
-                  }}
-                </span>
-                <span class="font-medium text-gray-800">₹{{ totalMaterialAmount.toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">
-                  {{
-                    labourCalculationMode === 'calculated'
-                      ? 'Total Labour (Calculated):'
-                      : 'Labour Amount (Manual):'
-                  }}
-                </span>
-                <span class="font-medium text-gray-800">₹{{ totalLabourAmount.toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Transport:</span>
-                <span class="font-medium text-gray-800">₹{{ transportAmount.toFixed(2) }}</span>
-              </div>
-              <div class="border-t border-gray-300 pt-2 flex justify-between text-xs text-gray-500">
-                <span>Subtotal (for PMC Safety calc):</span>
-                <span>₹{{ subtotalForPMC.toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">PMC Safety ({{ pmcSafetyPercentage }}%):</span>
-                <span class="font-medium text-gray-800">₹{{ pmcSafetyAmount.toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Adminstrative Cost ({{ adminCostPercentage }}%):</span>
-                <span class="font-medium text-gray-800">₹{{ adminCostAmount.toFixed(2) }}</span>
-              </div>
-              <div class="border-t border-gray-300 mt-3 pt-3 flex justify-between">
-                <span class="font-semibold text-gray-800">Grand Total:</span>
-                <span class="font-bold text-lg text-blue-600">₹{{ grandTotal.toFixed(2) }}</span>
-              </div>
+        <!-- Divider -->
+        <div class="border-t border-gray-200 my-6"></div>
+
+        <!-- Summary -->
+        <div class="bg-gray-50 border border-gray-200 rounded p-4 mb-6">
+          <h3 class="text-xs font-medium text-gray-700 mb-3 uppercase tracking-wide">
+            Updated Summary
+          </h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">
+                {{
+                  calculation.materialCalculationMode === 'calculated'
+                    ? 'Total Materials (Calculated):'
+                    : 'Material Amount (Manual):'
+                }}
+              </span>
+              <span class="font-medium text-gray-800"
+                >₹{{ calculatedMaterialTotal.toFixed(2) }}</span
+              >
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">
+                {{
+                  calculation.labourCalculationMode === 'calculated'
+                    ? 'Total Labour (Calculated):'
+                    : 'Labour Amount (Manual):'
+                }}
+              </span>
+              <span class="font-medium text-gray-800">₹{{ calculatedLabourTotal.toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Transport:</span>
+              <span class="font-medium text-gray-800"
+                >₹{{ (calculation.transportAmount || 0).toFixed(2) }}</span
+              >
+            </div>
+            <div class="border-t border-gray-300 pt-2 flex justify-between text-xs text-gray-500">
+              <span>Subtotal (for PMC Safety calc):</span>
+              <span>₹{{ calculatedSubtotal.toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600"
+                >PMC Safety ({{ calculation.pmcSafetyPercentage || 0 }}%):</span
+              >
+              <span class="font-medium text-gray-800">₹{{ calculatedPMCSafety.toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600"
+                >Administrative Cost ({{ calculation.adminCostPercentage || 0 }}%):</span
+              >
+              <span class="font-medium text-gray-800">₹{{ calculatedAdminCost.toFixed(2) }}</span>
+            </div>
+            <div class="border-t border-gray-300 mt-3 pt-3 flex justify-between">
+              <span class="font-semibold text-gray-800">Grand Total:</span>
+              <span class="font-bold text-lg text-blue-600"
+                >₹{{ calculatedGrandTotal.toFixed(2) }}</span
+              >
             </div>
           </div>
-
-          <!-- Save Button -->
-          <div class="mt-6 flex justify-end">
-            <button
-              @click="saveCalculation"
-              :disabled="!canSaveCalculation"
-              class="px-6 py-2 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Save Calculation
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Add Entry Dialog -->
-    <div
-      v-if="showDialog"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-white/10 backdrop-blur-md backdrop-saturate-150 supports-backdrop-filter:bg-white/10"
-    >
-      <div class="bg-white rounded shadow-lg w-96 p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Add New {{ dialogType }}</h3>
-        <input
-          v-model="newEntryName"
-          @keyup.enter="addNewEntry"
-          class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 mb-4"
-          :placeholder="`Enter ${dialogType} name`"
-          autofocus
-        />
-        <div class="flex justify-end gap-2">
+        <!-- Notes -->
+        <div class="mb-6">
+          <label class="block text-xs font-medium text-gray-600 mb-2">Notes (Optional)</label>
+          <textarea
+            v-model="calculation.notes"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Add any additional notes..."
+          ></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3">
           <button
-            @click="closeDialog"
-            class="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 transition"
+            @click="goBack"
+            class="px-6 py-2 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition"
           >
             Cancel
           </button>
           <button
-            @click="addNewEntry"
-            :disabled="!newEntryName.trim()"
-            class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="saveChanges"
+            class="px-6 py-2 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition"
           >
-            Add
+            Save Changes
           </button>
+        </div>
+      </div>
+
+      <!-- Not Found State -->
+      <div v-else-if="!loading" class="bg-white border border-gray-300 rounded shadow-sm p-12">
+        <div class="text-center">
+          <svg
+            class="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">Calculation not found</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            The calculation you're looking for doesn't exist.
+          </p>
+          <div class="mt-6">
+            <button
+              @click="goBack"
+              class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -697,48 +631,77 @@
 </template>
 
 <script>
-import { categoryAPI, subcategoryAPI, specAPI, calculationAPI } from '@/services/api'
+import { calculationAPI, categoryAPI, subcategoryAPI, specAPI } from '@/services/api'
 
 export default {
-  name: 'ProcurementConsole',
+  name: 'CalculationEdit',
 
   data() {
     return {
-      // Data from backend
-      categories: [],
-      subcategories: [],
-      specs: [],
-
-      // Current cascade selections
-      selectedCategory: '',
-      selectedSubcategory: '',
-      selectedSpec: '',
-
-      // Calculation state
-      calculationType: 'material',
-      materialCalculationMode: 'calculated',
-      manualMaterialAmount: 0,
-      materialLines: [],
-      labourCalculationMode: 'calculated',
-      manualLabourAmount: 0,
-      labourLines: [],
-      transportAmount: 0,
-      pmcSafetyPercentage: 0,
-      adminCostPercentage: 0,
-
-      // Dialog state
-      showDialog: false,
-      dialogType: '',
-      newEntryName: '',
-
-      // UI state
+      calculation: null,
       loading: false,
       errorMessage: '',
       successMessage: '',
+      calculationId: null,
+
+      // For dropdown selection
+      categories: [],
+      subcategories: [],
+      specs: [],
+      selectedCategory: '',
+      selectedSubcategory: '',
+      selectedSpec: '',
+      showSelectionPanel: false,
     }
   },
 
   computed: {
+    calculatedMaterialTotal() {
+      if (!this.calculation) return 0
+
+      if (this.calculation.materialCalculationMode === 'manual') {
+        return this.calculation.manualMaterialAmount || 0
+      }
+
+      return (this.calculation.materialLines || []).reduce(
+        (sum, line) => sum + this.calculateLineAmount(line),
+        0,
+      )
+    },
+
+    calculatedLabourTotal() {
+      if (!this.calculation) return 0
+
+      if (this.calculation.labourCalculationMode === 'manual') {
+        return this.calculation.manualLabourAmount || 0
+      }
+
+      return (this.calculation.labourLines || []).reduce(
+        (sum, line) => sum + this.calculateLabourLineAmount(line),
+        0,
+      )
+    },
+
+    calculatedSubtotal() {
+      return (
+        this.calculatedMaterialTotal +
+        this.calculatedLabourTotal +
+        (this.calculation?.transportAmount || 0)
+      )
+    },
+
+    calculatedPMCSafety() {
+      return (this.calculatedSubtotal * (this.calculation?.pmcSafetyPercentage || 0)) / 100
+    },
+
+    calculatedAdminCost() {
+      return (this.calculatedSubtotal * (this.calculation?.adminCostPercentage || 0)) / 100
+    },
+
+    calculatedGrandTotal() {
+      return this.calculatedSubtotal + this.calculatedPMCSafety + this.calculatedAdminCost
+    },
+
     filteredSubcategories() {
       if (!this.selectedCategory) return []
       return this.subcategories.filter((sub) => sub.categoryId === this.selectedCategory)
@@ -748,59 +711,84 @@ export default {
       if (!this.selectedSubcategory) return []
       return this.specs.filter((spec) => spec.subcategoryId === this.selectedSubcategory)
     },
-
-    totalMaterialAmount() {
-      if (this.materialCalculationMode === 'manual') {
-        return this.manualMaterialAmount
-      }
-      return this.materialLines.reduce((sum, line) => sum + this.lineAmount(line), 0)
-    },
-
-    totalLabourAmount() {
-      if (this.labourCalculationMode === 'manual') {
-        return this.manualLabourAmount
-      }
-      return this.labourLines.reduce((sum, line) => sum + this.labourLineAmount(line), 0)
-    },
-
-    subtotalForPMC() {
-      return this.totalMaterialAmount + this.totalLabourAmount + this.transportAmount
-    },
-
-    pmcSafetyAmount() {
-      return (this.subtotalForPMC * this.pmcSafetyPercentage) / 100
-    },
-    adminCostAmount() {
-      return (this.subtotalForPMC * this.adminCostPercentage) / 100
-    },
-
-    grandTotal() {
-      return this.subtotalForPMC + this.pmcSafetyAmount + this.adminCostAmount
-    },
-
-    canSaveCalculation() {
-      return this.selectedCategory && this.selectedSubcategory && this.selectedSpec
-    },
-
-    selectedSpecObject() {
-      return this.specs.find((s) => s._id === this.selectedSpec) || null
-    },
   },
 
   methods: {
+    async fetchCalculation() {
+      try {
+        this.loading = true
+        const response = await calculationAPI.getById(this.calculationId)
+        console.log(`Fetched calculation response:`, response)
+
+        if (response.success) {
+          this.calculation = response.data
+
+          // Ensure arrays exist
+          if (!this.calculation.materialLines) {
+            this.calculation.materialLines = []
+          }
+          if (!this.calculation.labourLines) {
+            this.calculation.labourLines = []
+          }
+
+          // Set default calculation modes if not present
+          if (!this.calculation.materialCalculationMode) {
+            this.calculation.materialCalculationMode = 'calculated'
+          }
+          if (!this.calculation.labourCalculationMode) {
+            this.calculation.labourCalculationMode = 'calculated'
+          }
+        }
+      } catch (error) {
+        this.showError('Failed to load calculation')
+        console.error('Error fetching calculation:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    calculateLineAmount(line) {
+      return (line.quantity || 0) * (line.rate || 0)
+    },
+
+    calculateLabourLineAmount(line) {
+      return (line.quantity || 0) * (line.rate || 0)
+    },
+
+    addMaterialLine() {
+      this.calculation.materialLines.push({
+        name: '',
+        quantity: 0,
+        uom: '',
+        rate: 0,
+      })
+    },
+
+    removeMaterialLine(index) {
+      this.calculation.materialLines.splice(index, 1)
+    },
+
+    addLabourLine() {
+      this.calculation.labourLines.push({
+        description: '',
+        quantity: 0,
+        rate: 0,
+      })
+    },
+
+    removeLabourLine(index) {
+      this.calculation.labourLines.splice(index, 1)
+    },
+
     // ==========================================
-    // DATA FETCHING
+    // CASCADE & RATE LOADING
     // ==========================================
     async fetchCategories() {
       try {
-        this.loading = true
         const response = await categoryAPI.getAll()
         this.categories = response.data
       } catch (error) {
-        this.showError('Failed to load categories')
         console.error('Error fetching categories:', error)
-      } finally {
-        this.loading = false
       }
     },
 
@@ -809,7 +797,6 @@ export default {
         const response = await subcategoryAPI.getAll()
         this.subcategories = response.data
       } catch (error) {
-        this.showError('Failed to load subcategories')
         console.error('Error fetching subcategories:', error)
       }
     },
@@ -819,14 +806,10 @@ export default {
         const response = await specAPI.getAll()
         this.specs = response.data
       } catch (error) {
-        this.showError('Failed to load specifications')
         console.error('Error fetching specs:', error)
       }
     },
 
-    // ==========================================
-    // CASCADE HANDLERS
-    // ==========================================
     async onCategoryChange() {
       this.selectedSubcategory = ''
       this.selectedSpec = ''
@@ -854,147 +837,100 @@ export default {
       }
     },
 
-    // ==========================================
-    // CALCULATION METHODS
-    // ==========================================
-    setType(type) {
-      this.calculationType = type
+    async onSpecChange() {
+      // Spec selected - ready to load
     },
 
-    addMaterialLine() {
-      this.materialLines.push({
-        name: '',
-        quantity: 0,
-        uom: '',
-        rate: 0,
-      })
-    },
-
-    removeMaterialLine(index) {
-      this.materialLines.splice(index, 1)
-    },
-
-    lineAmount(line) {
-      return (line.quantity || 0) * (line.rate || 0)
-    },
-
-    addLabourLine() {
-      this.labourLines.push({
-        description: '',
-        quantity: 0,
-        rate: 0,
-      })
-    },
-
-    removeLabourLine(index) {
-      this.labourLines.splice(index, 1)
-    },
-
-    labourLineAmount(line) {
-      return (line.quantity || 0) * (line.rate || 0)
-    },
-
-    async saveCalculation() {
-      if (!this.canSaveCalculation) {
-        this.showError('Please select Category, Subcategory, and Specification')
+    async loadRatesFromSelection() {
+      if (!this.selectedSpec) {
+        this.showError('Please select a specification')
         return
       }
 
       try {
         this.loading = true
 
-        const calculationData = {
-          categoryId: this.selectedCategory,
-          subcategoryId: this.selectedSubcategory,
-          specId: this.selectedSpec,
-          type: this.calculationType,
-          materialCalculationMode: this.materialCalculationMode,
-          manualMaterialAmount: this.manualMaterialAmount,
-          materialLines: this.materialLines,
-          labourCalculationMode: this.labourCalculationMode,
-          manualLabourAmount: this.manualLabourAmount,
-          labourLines: this.labourLines,
-          transportAmount: this.transportAmount,
-          pmcSafetyPercentage: this.pmcSafetyPercentage,
-          adminCostPercentage: this.adminCostPercentage,
-        }
+        // Fetch the most recent calculation for this spec
+        const response = await calculationAPI.getAll({ specId: this.selectedSpec })
 
-        const response = await calculationAPI.create(calculationData)
+        if (response.success && response.data.length > 0) {
+          // Get the most recent calculation (assuming sorted by date)
+          const sourceCalculation = response.data[0]
 
-        if (response.success) {
-          this.showSuccess('Calculation saved successfully!')
-          this.resetCalculationForm()
+          // Load material data
+          this.calculation.materialCalculationMode = sourceCalculation.materialCalculationMode
+          this.calculation.manualMaterialAmount = sourceCalculation.manualMaterialAmount || 0
+          this.calculation.materialLines = JSON.parse(
+            JSON.stringify(sourceCalculation.materialLines || []),
+          )
+
+          // Load labour data
+          this.calculation.labourCalculationMode = sourceCalculation.labourCalculationMode
+          this.calculation.manualLabourAmount = sourceCalculation.manualLabourAmount || 0
+          this.calculation.labourLines = JSON.parse(
+            JSON.stringify(sourceCalculation.labourLines || []),
+          )
+
+          // Load other costs
+          this.calculation.transportAmount = sourceCalculation.transportAmount || 0
+          this.calculation.pmcSafetyPercentage = sourceCalculation.pmcSafetyPercentage || 0
+          this.calculation.adminCostPercentage = sourceCalculation.adminCostPercentage || 0
+
+          this.showSuccess('Rates loaded successfully from selected specification!')
+          this.showSelectionPanel = false
+        } else {
+          this.showError('No existing calculation found for this specification')
         }
       } catch (error) {
-        this.showError(error.response?.data?.message || 'Failed to save calculation')
-        console.error('Error saving calculation:', error)
+        this.showError('Failed to load rates')
+        console.error('Error loading rates:', error)
       } finally {
         this.loading = false
       }
     },
 
-    // ==========================================
-    // DIALOG METHODS
-    // ==========================================
-    showAddDialog(type) {
-      this.dialogType = type
-      this.showDialog = true
-      this.newEntryName = ''
-    },
-
-    closeDialog() {
-      this.showDialog = false
-      this.newEntryName = ''
-    },
-
-    async addNewEntry() {
-      const name = this.newEntryName.trim()
-      if (!name) return
-
+    async saveChanges() {
       try {
         this.loading = true
 
-        if (this.dialogType === 'category') {
-          const response = await categoryAPI.create({ name })
-          if (response.success) {
-            this.categories.push(response.data)
-            this.showSuccess('Category added successfully')
-          }
-        } else if (this.dialogType === 'subcategory') {
-          const response = await subcategoryAPI.create({
-            name,
-            categoryId: this.selectedCategory,
-          })
-          if (response.success) {
-            this.fetchSubcategories()
-            this.subcategories.push(response.data)
-
-            this.showSuccess('Subcategory added successfully')
-          }
-        } else if (this.dialogType === 'spec') {
-          const response = await specAPI.create({
-            name,
-            subcategoryId: this.selectedSubcategory,
-          })
-          if (response.success) {
-            this.fetchSpecs()
-            this.specs.push(response.data)
-            this.showSuccess('Specification added successfully')
-          }
+        // Prepare update data
+        const updateData = {
+          materialCalculationMode: this.calculation.materialCalculationMode,
+          manualMaterialAmount: this.calculation.manualMaterialAmount || 0,
+          materialLines: this.calculation.materialLines,
+          labourCalculationMode: this.calculation.labourCalculationMode,
+          manualLabourAmount: this.calculation.manualLabourAmount || 0,
+          labourLines: this.calculation.labourLines,
+          transportAmount: this.calculation.transportAmount || 0,
+          pmcSafetyPercentage: this.calculation.pmcSafetyPercentage || 0,
+          adminCostPercentage: this.calculation.adminCostPercentage || 0,
+          notes: this.calculation.notes || '',
         }
 
-        this.closeDialog()
+        const response = await calculationAPI.update(this.calculationId, updateData)
+
+        if (response.success) {
+          this.showSuccess('Calculation updated successfully!')
+          // Optionally redirect after a delay
+          setTimeout(() => {
+            this.goBack()
+          }, 1500)
+        }
       } catch (error) {
-        this.showError(error.response?.data?.message || `Failed to add ${this.dialogType}`)
-        console.error(`Error adding ${this.dialogType}:`, error)
+        this.showError(error.response?.data?.message || 'Failed to update calculation')
+        console.error('Error updating calculation:', error)
       } finally {
         this.loading = false
       }
     },
 
-    // ==========================================
-    // UTILITY METHODS
-    // ==========================================
+    goBack() {
+      // Use Vue Router to go back
+      this.$router.back()
+      // Or navigate to a specific route:
+      // this.$router.push('/procurement-console')
+    },
+
     showError(message) {
       this.errorMessage = message
       setTimeout(() => {
@@ -1008,29 +944,28 @@ export default {
         this.successMessage = ''
       }, 3000)
     },
-
-    resetCalculationForm() {
-      this.materialCalculationMode = 'calculated'
-      this.manualMaterialAmount = 0
-      this.materialLines = []
-      this.labourCalculationMode = 'calculated'
-      this.manualLabourAmount = 0
-      this.labourLines = []
-      this.transportAmount = 0
-      this.pmcSafetyPercentage = 0
-      this.adminCostPercentage = 0
-    },
   },
 
-  // ==========================================
-  // LIFECYCLE HOOKS
-  // ==========================================
-  async mounted() {
-    await Promise.all([this.fetchCategories(), this.fetchSubcategories(), this.fetchSpecs()])
+  mounted() {
+    // Get calculation ID from route query (not params)
+    this.calculationId = this.$route.query.id
+
+    if (!this.calculationId) {
+      this.showError('Invalid calculation ID')
+      return
+    }
+
+    // Fetch calculation and dropdown data
+    Promise.all([
+      this.fetchCalculation(),
+      this.fetchCategories(),
+      this.fetchSubcategories(),
+      this.fetchSpecs(),
+    ])
   },
 }
 </script>
 
 <style scoped>
-/* Additional custom styles if needed beyond Tailwind */
+/* Additional custom styles if needed */
 </style>

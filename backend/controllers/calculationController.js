@@ -20,6 +20,9 @@ export const getAllCalculations = async (req, res, next) => {
 export const getCalculationById = async (req, res, next) => {
   try {
     const calculation = await Calculation.findById(req.params.id)
+      .populate('categoryId')
+      .populate('subcategoryId')
+      .populate('specId')
 
     if (!calculation) {
       return res.status(404).json({ success: false, message: 'Calculation not found' })
@@ -112,6 +115,7 @@ export const createCalculation = async (req, res, next) => {
       labourLines,
       transportAmount,
       pmcSafetyPercentage,
+      adminCostPercentage,
       notes,
     } = req.body
 
@@ -157,8 +161,11 @@ export const createCalculation = async (req, res, next) => {
     // Calculate PMC Safety Amount
     const pmcSafetyAmount = (subtotalForPMC * (pmcSafetyPercentage || 0)) / 100
 
+    // Calculate Admin Cost Amount
+    const adminCostAmount = (subtotalForPMC * (adminCostPercentage || 0)) / 100
+
     // Calculate Grand Total
-    const grandTotal = subtotalForPMC + pmcSafetyAmount
+    const grandTotal = subtotalForPMC + pmcSafetyAmount + adminCostAmount
 
     // Create Calculation Document
     const calculation = await Calculation.create({
@@ -182,10 +189,12 @@ export const createCalculation = async (req, res, next) => {
       // Other costs
       transportAmount: transportAmount || 0,
       pmcSafetyPercentage: pmcSafetyPercentage || 0,
+      adminCostPercentage: adminCostPercentage || 0,
 
       // Calculated totals
       subtotalForPMC,
       pmcSafetyAmount,
+      adminCostAmount,
       grandTotal,
 
       // Optional notes
@@ -209,15 +218,87 @@ export const createCalculation = async (req, res, next) => {
   }
 }
 
+// export const updateCalculation = async (req, res, next) => {
+//   try {
+//     const {
+//       materialCalculationMode,
+//       manualMaterialAmount,
+//       materialLines,
+//       labourAmount,
+//       transportAmount,
+//       pmcSafetyPercentage,
+//       notes,
+//     } = req.body
+
+//     const existing = await Calculation.findById(req.params.id)
+//     if (!existing) {
+//       return res.status(404).json({ success: false, message: 'Calculation not found' })
+//     }
+
+//     let processedMaterialLines
+//     if (materialLines) {
+//       processedMaterialLines = materialLines.map((line) => ({
+//         ...line,
+//         amount: line.quantity * line.rate,
+//       }))
+//     }
+
+//     let totalMaterialAmount = existing.totalMaterialAmount
+//     if (materialCalculationMode === 'manual') {
+//       totalMaterialAmount = manualMaterialAmount ?? existing.manualMaterialAmount
+//     } else if (processedMaterialLines) {
+//       totalMaterialAmount = processedMaterialLines.reduce((s, l) => s + l.amount, 0)
+//     }
+
+//     const subtotalForPMC =
+//       totalMaterialAmount +
+//       (labourAmount ?? existing.labourAmount) +
+//       (transportAmount ?? existing.transportAmount)
+
+//     const pmcPercent = pmcSafetyPercentage ?? existing.pmcSafetyPercentage
+//     const pmcSafetyAmount = (subtotalForPMC * pmcPercent) / 100
+//     const grandTotal = subtotalForPMC + pmcSafetyAmount
+
+//     const calculation = await Calculation.findByIdAndUpdate(
+//       req.params.id,
+//       {
+//         ...(materialCalculationMode && { materialCalculationMode }),
+//         ...(manualMaterialAmount !== undefined && { manualMaterialAmount }),
+//         ...(processedMaterialLines && { materialLines: processedMaterialLines }),
+//         totalMaterialAmount,
+//         ...(labourAmount !== undefined && { labourAmount }),
+//         ...(transportAmount !== undefined && { transportAmount }),
+//         ...(pmcSafetyPercentage !== undefined && { pmcSafetyPercentage }),
+//         subtotalForPMC,
+//         pmcSafetyAmount,
+//         grandTotal,
+//         ...(notes !== undefined && { notes }),
+//       },
+//       { new: true, runValidators: true },
+//     )
+//       .populate('categoryId', 'name')
+//       .populate('subcategoryId', 'name')
+//       .populate('specId', 'name')
+
+//     res.json({ success: true, data: calculation })
+//   } catch (error) {
+//     next(error)
+//   }
+// }
 export const updateCalculation = async (req, res, next) => {
   try {
     const {
       materialCalculationMode,
       manualMaterialAmount,
       materialLines,
-      labourAmount,
+
+      labourCalculationMode,
+      manualLabourAmount,
+      labourLines,
+
       transportAmount,
       pmcSafetyPercentage,
+      adminCostPercentage,
       notes,
     } = req.body
 
@@ -226,43 +307,75 @@ export const updateCalculation = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Calculation not found' })
     }
 
-    let processedMaterialLines
+    /* ---------------- MATERIAL ---------------- */
+    let processedMaterialLines = existing.materialLines
     if (materialLines) {
       processedMaterialLines = materialLines.map((line) => ({
         ...line,
-        amount: line.quantity * line.rate,
+        amount: (line.quantity || 0) * (line.rate || 0),
       }))
     }
 
     let totalMaterialAmount = existing.totalMaterialAmount
     if (materialCalculationMode === 'manual') {
       totalMaterialAmount = manualMaterialAmount ?? existing.manualMaterialAmount
-    } else if (processedMaterialLines) {
+    } else {
       totalMaterialAmount = processedMaterialLines.reduce((s, l) => s + l.amount, 0)
     }
 
-    const subtotalForPMC =
-      totalMaterialAmount +
-      (labourAmount ?? existing.labourAmount) +
-      (transportAmount ?? existing.transportAmount)
+    /* ---------------- LABOUR ---------------- */
+    let processedLabourLines = existing.labourLines
+    if (labourLines) {
+      processedLabourLines = labourLines.map((line) => ({
+        ...line,
+        amount: (line.quantity || 0) * (line.rate || 0),
+      }))
+    }
+
+    let totalLabourAmount = existing.totalLabourAmount
+    if (labourCalculationMode === 'manual') {
+      totalLabourAmount = manualLabourAmount ?? existing.manualLabourAmount
+    } else {
+      totalLabourAmount = processedLabourLines.reduce((s, l) => s + l.amount, 0)
+    }
+
+    /* ---------------- TOTALS ---------------- */
+    const safeTransport = transportAmount ?? existing.transportAmount
+
+    const subtotalForPMC = totalMaterialAmount + totalLabourAmount + safeTransport
 
     const pmcPercent = pmcSafetyPercentage ?? existing.pmcSafetyPercentage
-    const pmcSafetyAmount = (subtotalForPMC * pmcPercent) / 100
-    const grandTotal = subtotalForPMC + pmcSafetyAmount
+    const adminPercent = adminCostPercentage ?? existing.adminCostPercentage
 
+    const pmcSafetyAmount = (subtotalForPMC * pmcPercent) / 100
+    const adminCostAmount = (subtotalForPMC * adminPercent) / 100
+
+    const grandTotal = subtotalForPMC + pmcSafetyAmount + adminCostAmount
+
+    /* ---------------- UPDATE ---------------- */
     const calculation = await Calculation.findByIdAndUpdate(
       req.params.id,
       {
-        ...(materialCalculationMode && { materialCalculationMode }),
-        ...(manualMaterialAmount !== undefined && { manualMaterialAmount }),
-        ...(processedMaterialLines && { materialLines: processedMaterialLines }),
+        materialCalculationMode: materialCalculationMode ?? existing.materialCalculationMode,
+        manualMaterialAmount: manualMaterialAmount ?? existing.manualMaterialAmount,
+        materialLines: processedMaterialLines,
         totalMaterialAmount,
-        ...(labourAmount !== undefined && { labourAmount }),
-        ...(transportAmount !== undefined && { transportAmount }),
-        ...(pmcSafetyPercentage !== undefined && { pmcSafetyPercentage }),
+
+        labourCalculationMode: labourCalculationMode ?? existing.labourCalculationMode,
+        manualLabourAmount: manualLabourAmount ?? existing.manualLabourAmount,
+        labourLines: processedLabourLines,
+        totalLabourAmount,
+
+        transportAmount: safeTransport,
+
+        pmcSafetyPercentage: pmcPercent,
+        adminCostPercentage: adminPercent,
+
         subtotalForPMC,
         pmcSafetyAmount,
+        adminCostAmount,
         grandTotal,
+
         ...(notes !== undefined && { notes }),
       },
       { new: true, runValidators: true },

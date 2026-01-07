@@ -146,6 +146,9 @@
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">Labour</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">Transport</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">PMC Safety</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">
+                  Adminstrative Cost
+                </th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">Grand Total</th>
                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-700">Actions</th>
               </tr>
@@ -185,6 +188,9 @@
                 </td>
                 <td class="px-4 py-3 text-right text-gray-800">
                   ₹{{ formatNumber(calc.pmcSafetyAmount) }}
+                </td>
+                <td class="px-4 py-3 text-right text-gray-800">
+                  ₹{{ formatNumber(calc.adminCostAmount) }}
                 </td>
                 <td class="px-4 py-3 text-right font-semibold text-blue-600">
                   ₹{{ formatNumber(calc.grandTotal) }}
@@ -460,6 +466,14 @@
                 >
                 <span class="font-medium text-gray-800"
                   >₹{{ formatNumber(selectedCalculation.pmcSafetyAmount) }}</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600"
+                  >Adminstrative Cost ({{ selectedCalculation.adminCostPercentage }}%):</span
+                >
+                <span class="font-medium text-gray-800"
+                  >₹{{ formatNumber(selectedCalculation.adminCostAmount) }}</span
                 >
               </div>
               <div class="border-t border-gray-300 mt-3 pt-3 flex justify-between">
