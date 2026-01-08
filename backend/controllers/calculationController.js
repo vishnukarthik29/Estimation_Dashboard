@@ -285,9 +285,119 @@ export const createCalculation = async (req, res, next) => {
 //     next(error)
 //   }
 // }
+// export const updateCalculation = async (req, res, next) => {
+//   try {
+//     const {
+//       materialCalculationMode,
+//       manualMaterialAmount,
+//       materialLines,
+
+//       labourCalculationMode,
+//       manualLabourAmount,
+//       labourLines,
+
+//       transportAmount,
+//       pmcSafetyPercentage,
+//       adminCostPercentage,
+//       notes,
+//     } = req.body
+
+//     const existing = await Calculation.findById(req.params.id)
+//     if (!existing) {
+//       return res.status(404).json({ success: false, message: 'Calculation not found' })
+//     }
+
+//     /* ---------------- MATERIAL ---------------- */
+//     let processedMaterialLines = existing.materialLines
+//     if (materialLines) {
+//       processedMaterialLines = materialLines.map((line) => ({
+//         ...line,
+//         amount: (line.quantity || 0) * (line.rate || 0),
+//       }))
+//     }
+
+//     let totalMaterialAmount = existing.totalMaterialAmount
+//     if (materialCalculationMode === 'manual') {
+//       totalMaterialAmount = manualMaterialAmount ?? existing.manualMaterialAmount
+//     } else {
+//       totalMaterialAmount = processedMaterialLines.reduce((s, l) => s + l.amount, 0)
+//     }
+
+//     /* ---------------- LABOUR ---------------- */
+//     let processedLabourLines = existing.labourLines
+//     if (labourLines) {
+//       processedLabourLines = labourLines.map((line) => ({
+//         ...line,
+//         amount: (line.quantity || 0) * (line.rate || 0),
+//       }))
+//     }
+
+//     let totalLabourAmount = existing.totalLabourAmount
+//     if (labourCalculationMode === 'manual') {
+//       totalLabourAmount = manualLabourAmount ?? existing.manualLabourAmount
+//     } else {
+//       totalLabourAmount = processedLabourLines.reduce((s, l) => s + l.amount, 0)
+//     }
+
+//     /* ---------------- TOTALS ---------------- */
+//     const safeTransport = transportAmount ?? existing.transportAmount
+
+//     const subtotalForPMC = totalMaterialAmount + totalLabourAmount + safeTransport
+
+//     const pmcPercent = pmcSafetyPercentage ?? existing.pmcSafetyPercentage
+//     const adminPercent = adminCostPercentage ?? existing.adminCostPercentage
+
+//     const pmcSafetyAmount = (subtotalForPMC * pmcPercent) / 100
+//     const adminCostAmount = (subtotalForPMC * adminPercent) / 100
+
+//     const grandTotal = subtotalForPMC + pmcSafetyAmount + adminCostAmount
+
+//     /* ---------------- UPDATE ---------------- */
+//     const calculation = await Calculation.findByIdAndUpdate(
+//       req.params.id,
+//       {
+//         materialCalculationMode: materialCalculationMode ?? existing.materialCalculationMode,
+//         manualMaterialAmount: manualMaterialAmount ?? existing.manualMaterialAmount,
+//         materialLines: processedMaterialLines,
+//         totalMaterialAmount,
+
+//         labourCalculationMode: labourCalculationMode ?? existing.labourCalculationMode,
+//         manualLabourAmount: manualLabourAmount ?? existing.manualLabourAmount,
+//         labourLines: processedLabourLines,
+//         totalLabourAmount,
+
+//         transportAmount: safeTransport,
+
+//         pmcSafetyPercentage: pmcPercent,
+//         adminCostPercentage: adminPercent,
+
+//         subtotalForPMC,
+//         pmcSafetyAmount,
+//         adminCostAmount,
+//         grandTotal,
+
+//         ...(notes !== undefined && { notes }),
+//       },
+//       { new: true, runValidators: true },
+//     )
+//       .populate('categoryId', 'name')
+//       .populate('subcategoryId', 'name')
+//       .populate('specId', 'name')
+
+//     res.json({ success: true, data: calculation })
+//   } catch (error) {
+//     next(error)
+//   }
+// }
+
 export const updateCalculation = async (req, res, next) => {
   try {
     const {
+      categoryId,
+      subcategoryId,
+      specId,
+      type,
+
       materialCalculationMode,
       manualMaterialAmount,
       materialLines,
@@ -308,40 +418,29 @@ export const updateCalculation = async (req, res, next) => {
     }
 
     /* ---------------- MATERIAL ---------------- */
-    let processedMaterialLines = existing.materialLines
-    if (materialLines) {
-      processedMaterialLines = materialLines.map((line) => ({
-        ...line,
-        amount: (line.quantity || 0) * (line.rate || 0),
-      }))
-    }
+    const processedMaterialLines = (materialLines ?? existing.materialLines).map((line) => ({
+      ...line,
+      amount: (line.quantity || 0) * (line.rate || 0),
+    }))
 
-    let totalMaterialAmount = existing.totalMaterialAmount
-    if (materialCalculationMode === 'manual') {
-      totalMaterialAmount = manualMaterialAmount ?? existing.manualMaterialAmount
-    } else {
-      totalMaterialAmount = processedMaterialLines.reduce((s, l) => s + l.amount, 0)
-    }
+    const totalMaterialAmount =
+      materialCalculationMode === 'manual'
+        ? (manualMaterialAmount ?? existing.manualMaterialAmount)
+        : processedMaterialLines.reduce((s, l) => s + l.amount, 0)
 
     /* ---------------- LABOUR ---------------- */
-    let processedLabourLines = existing.labourLines
-    if (labourLines) {
-      processedLabourLines = labourLines.map((line) => ({
-        ...line,
-        amount: (line.quantity || 0) * (line.rate || 0),
-      }))
-    }
+    const processedLabourLines = (labourLines ?? existing.labourLines).map((line) => ({
+      ...line,
+      amount: (line.quantity || 0) * (line.rate || 0),
+    }))
 
-    let totalLabourAmount = existing.totalLabourAmount
-    if (labourCalculationMode === 'manual') {
-      totalLabourAmount = manualLabourAmount ?? existing.manualLabourAmount
-    } else {
-      totalLabourAmount = processedLabourLines.reduce((s, l) => s + l.amount, 0)
-    }
+    const totalLabourAmount =
+      labourCalculationMode === 'manual'
+        ? (manualLabourAmount ?? existing.manualLabourAmount)
+        : processedLabourLines.reduce((s, l) => s + l.amount, 0)
 
     /* ---------------- TOTALS ---------------- */
     const safeTransport = transportAmount ?? existing.transportAmount
-
     const subtotalForPMC = totalMaterialAmount + totalLabourAmount + safeTransport
 
     const pmcPercent = pmcSafetyPercentage ?? existing.pmcSafetyPercentage
@@ -349,25 +448,32 @@ export const updateCalculation = async (req, res, next) => {
 
     const pmcSafetyAmount = (subtotalForPMC * pmcPercent) / 100
     const adminCostAmount = (subtotalForPMC * adminPercent) / 100
-
     const grandTotal = subtotalForPMC + pmcSafetyAmount + adminCostAmount
 
     /* ---------------- UPDATE ---------------- */
-    const calculation = await Calculation.findByIdAndUpdate(
+    const updated = await Calculation.findByIdAndUpdate(
       req.params.id,
       {
+        /* ✅ CATEGORY / SPEC UPDATES */
+        ...(categoryId && { categoryId }),
+        ...(subcategoryId && { subcategoryId }),
+        ...(specId && { specId }),
+        ...(type && { type }),
+
+        /* MATERIAL */
         materialCalculationMode: materialCalculationMode ?? existing.materialCalculationMode,
         manualMaterialAmount: manualMaterialAmount ?? existing.manualMaterialAmount,
         materialLines: processedMaterialLines,
         totalMaterialAmount,
 
+        /* LABOUR */
         labourCalculationMode: labourCalculationMode ?? existing.labourCalculationMode,
         manualLabourAmount: manualLabourAmount ?? existing.manualLabourAmount,
         labourLines: processedLabourLines,
         totalLabourAmount,
 
+        /* OTHER */
         transportAmount: safeTransport,
-
         pmcSafetyPercentage: pmcPercent,
         adminCostPercentage: adminPercent,
 
@@ -384,7 +490,7 @@ export const updateCalculation = async (req, res, next) => {
       .populate('subcategoryId', 'name')
       .populate('specId', 'name')
 
-    res.json({ success: true, data: calculation })
+    res.json({ success: true, data: updated })
   } catch (error) {
     next(error)
   }

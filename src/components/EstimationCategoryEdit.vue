@@ -50,6 +50,7 @@
                 <i v-else class="bi bi-chevron-down"></i>
               </button>
 
+              <!-- Edit Category -->
               <div v-if="editingCategory === category._id" class="flex-1 flex gap-2">
                 <input
                   v-model="editForm.name"
@@ -169,20 +170,39 @@
                   </button>
                 </div>
 
+                <!-- Spec list -->
                 <div
                   v-for="spec in getSpecsBySubcategory(subcategory._id)"
                   :key="spec._id"
                   class="flex justify-between items-center p-2 bg-white rounded mb-1"
                 >
-                  <span>{{ spec.name }}</span>
-                  <div class="flex gap-2">
-                    <button @click="startEditSpec(spec)" class="text-blue-600">
-                      <i class="bi bi-pencil"></i>
+                  <!-- EDIT MODE -->
+                  <div v-if="editingSpec === spec._id" class="flex flex-1 gap-2">
+                    <input
+                      v-model="editForm.name"
+                      class="flex-1 px-2 py-1 border rounded"
+                      autofocus
+                    />
+                    <button @click="saveSpec(spec._id)" class="text-green-600">
+                      <i class="bi bi-check-lg"></i>
                     </button>
-                    <button @click="deleteSpec(spec._id)" class="text-red-600">
-                      <i class="bi bi-trash"></i>
+                    <button @click="cancelEdit" class="text-gray-600">
+                      <i class="bi bi-x-lg"></i>
                     </button>
                   </div>
+
+                  <!-- VIEW MODE -->
+                  <template v-else>
+                    <span>{{ spec.name }}</span>
+                    <div class="flex gap-2">
+                      <button @click="startEditSpec(spec)" class="text-blue-600">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button @click="deleteSpec(spec._id)" class="text-red-600">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </template>
                 </div>
               </div>
             </div>
@@ -349,6 +369,13 @@ export default {
     startEditSpec(spec) {
       this.editingSpec = spec._id
       this.editForm.name = spec.name
+    },
+
+    async saveSpec(id) {
+      if (!this.editForm.name.trim()) return
+      await specAPI.update(id, this.editForm)
+      await this.loadData()
+      this.cancelEdit()
     },
 
     async deleteSpec(id) {

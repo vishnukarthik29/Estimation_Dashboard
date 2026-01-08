@@ -91,36 +91,66 @@
 
       <!-- Main Content -->
       <div v-if="calculation" class="bg-white border border-gray-300 rounded shadow-sm p-6">
-        <!-- Load Rates Panel -->
-
-        <!-- Calculation Info -->
+        <!-- Calculation Info - Editable -->
         <div class="mb-8 p-4 bg-blue-50 border border-blue-200 rounded">
           <h2 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">
-            Current Calculation Details
+            Calculation Details
           </h2>
-          <div class="grid grid-cols-3 gap-4 text-sm">
+
+          <div class="grid grid-cols-3 gap-4 mb-4">
             <div>
-              <span class="text-gray-600">Category:</span>
-              <span class="ml-2 font-medium text-gray-800">{{
-                calculation.categoryId.name || 'N/A'
-              }}</span>
+              <label class="block text-xs font-medium text-gray-600 mb-2">Category *</label>
+              <select
+                v-model="selectedCategoryId"
+                @change="onEditCategoryChange"
+                class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Select Category</option>
+                <option v-for="cat in categories" :key="cat._id" :value="cat._id">
+                  {{ cat.name }}
+                </option>
+              </select>
             </div>
+
             <div>
-              <span class="text-gray-600">Subcategory:</span>
-              <span class="ml-2 font-medium text-gray-800">{{
-                calculation.subcategoryId?.name || 'N/A'
-              }}</span>
+              <label class="block text-xs font-medium text-gray-600 mb-2">Subcategory *</label>
+              <select
+                v-model="selectedSubcategoryId"
+                @change="onEditSubcategoryChange"
+                :disabled="!selectedCategoryId"
+                class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Select Subcategory</option>
+                <option v-for="sub in editFilteredSubcategories" :key="sub._id" :value="sub._id">
+                  {{ sub.name }}
+                </option>
+              </select>
             </div>
+
             <div>
-              <span class="text-gray-600">Specification:</span>
-              <span class="ml-2 font-medium text-gray-800">{{
-                calculation.specId?.name || 'N/A'
-              }}</span>
+              <label class="block text-xs font-medium text-gray-600 mb-2">Specification *</label>
+              <select
+                v-model="selectedSpecId"
+                :disabled="!selectedSubcategoryId"
+                class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Select Specification</option>
+                <option v-for="spec in editFilteredSpecs" :key="spec._id" :value="spec._id">
+                  {{ spec.name }}
+                </option>
+              </select>
             </div>
           </div>
-          <div class="mt-2 text-sm">
-            <span class="text-gray-600">Type:</span>
-            <span class="ml-2 font-medium text-gray-800 capitalize">{{ calculation.type }}</span>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-2">Type *</label>
+            <select
+              v-model="calculation.type"
+              class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-xs"
+            >
+              <option value="material">Material</option>
+              <option value="subcontractor">Subcontactor</option>
+            </select>
           </div>
         </div>
 
@@ -652,6 +682,11 @@ export default {
       selectedSubcategory: '',
       selectedSpec: '',
       showSelectionPanel: false,
+
+      // For editing current calculation
+      selectedCategoryId: '',
+      selectedSubcategoryId: '',
+      selectedSpecId: '',
     }
   },
 
@@ -711,6 +746,16 @@ export default {
       if (!this.selectedSubcategory) return []
       return this.specs.filter((spec) => spec.subcategoryId === this.selectedSubcategory)
     },
+
+    editFilteredSubcategories() {
+      if (!this.selectedCategoryId) return []
+      return this.subcategories.filter((sub) => sub.categoryId === this.selectedCategoryId)
+    },
+
+    editFilteredSpecs() {
+      if (!this.selectedSubcategoryId) return []
+      return this.specs.filter((spec) => spec.subcategoryId === this.selectedSubcategoryId)
+    },
   },
 
   methods: {
@@ -738,6 +783,13 @@ export default {
           if (!this.calculation.labourCalculationMode) {
             this.calculation.labourCalculationMode = 'calculated'
           }
+
+          // Initialize the edit dropdown selections
+          this.selectedCategoryId =
+            this.calculation.categoryId?._id || this.calculation.categoryId || ''
+          this.selectedSubcategoryId =
+            this.calculation.subcategoryId?._id || this.calculation.subcategoryId || ''
+          this.selectedSpecId = this.calculation.specId?._id || this.calculation.specId || ''
         }
       } catch (error) {
         this.showError('Failed to load calculation')
@@ -780,9 +832,15 @@ export default {
       this.calculation.labourLines.splice(index, 1)
     },
 
-    // ==========================================
-    // CASCADE & RATE LOADING
-    // ==========================================
+    onEditCategoryChange() {
+      this.selectedSubcategoryId = ''
+      this.selectedSpecId = ''
+    },
+
+    onEditSubcategoryChange() {
+      this.selectedSpecId = ''
+    },
+
     async fetchCategories() {
       try {
         const response = await categoryAPI.getAll()
@@ -850,28 +908,23 @@ export default {
       try {
         this.loading = true
 
-        // Fetch the most recent calculation for this spec
         const response = await calculationAPI.getAll({ specId: this.selectedSpec })
 
         if (response.success && response.data.length > 0) {
-          // Get the most recent calculation (assuming sorted by date)
           const sourceCalculation = response.data[0]
 
-          // Load material data
           this.calculation.materialCalculationMode = sourceCalculation.materialCalculationMode
           this.calculation.manualMaterialAmount = sourceCalculation.manualMaterialAmount || 0
           this.calculation.materialLines = JSON.parse(
             JSON.stringify(sourceCalculation.materialLines || []),
           )
 
-          // Load labour data
           this.calculation.labourCalculationMode = sourceCalculation.labourCalculationMode
           this.calculation.manualLabourAmount = sourceCalculation.manualLabourAmount || 0
           this.calculation.labourLines = JSON.parse(
             JSON.stringify(sourceCalculation.labourLines || []),
           )
 
-          // Load other costs
           this.calculation.transportAmount = sourceCalculation.transportAmount || 0
           this.calculation.pmcSafetyPercentage = sourceCalculation.pmcSafetyPercentage || 0
           this.calculation.adminCostPercentage = sourceCalculation.adminCostPercentage || 0
@@ -890,11 +943,19 @@ export default {
     },
 
     async saveChanges() {
+      if (!this.selectedCategoryId || !this.selectedSubcategoryId || !this.selectedSpecId) {
+        this.showError('Please select Category, Subcategory, and Specification')
+        return
+      }
+
       try {
         this.loading = true
 
-        // Prepare update data
         const updateData = {
+          categoryId: this.selectedCategoryId,
+          subcategoryId: this.selectedSubcategoryId,
+          specId: this.selectedSpecId,
+          type: this.calculation.type,
           materialCalculationMode: this.calculation.materialCalculationMode,
           manualMaterialAmount: this.calculation.manualMaterialAmount || 0,
           materialLines: this.calculation.materialLines,
@@ -911,7 +972,6 @@ export default {
 
         if (response.success) {
           this.showSuccess('Calculation updated successfully!')
-          // Optionally redirect after a delay
           setTimeout(() => {
             this.goBack()
           }, 1500)
@@ -925,10 +985,7 @@ export default {
     },
 
     goBack() {
-      // Use Vue Router to go back
       this.$router.back()
-      // Or navigate to a specific route:
-      // this.$router.push('/procurement-console')
     },
 
     showError(message) {
@@ -947,7 +1004,6 @@ export default {
   },
 
   mounted() {
-    // Get calculation ID from route query (not params)
     this.calculationId = this.$route.query.id
 
     if (!this.calculationId) {
@@ -955,7 +1011,6 @@ export default {
       return
     }
 
-    // Fetch calculation and dropdown data
     Promise.all([
       this.fetchCalculation(),
       this.fetchCategories(),
