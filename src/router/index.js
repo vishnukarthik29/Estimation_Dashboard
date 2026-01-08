@@ -4,6 +4,7 @@ import EstimationEntry from '@/components/EstimationEntry.vue'
 import EstimationList from '@/components/EstimationList.vue'
 import EstimationEdit from '@/components/EstimationEdit.vue'
 import EstimationEditList from '@/components/EstimationEditList.vue'
+import EstimationCategoryEdit from '@/components/EstimationCategoryEdit.vue'
 
 const routes = [
   {
@@ -33,6 +34,11 @@ const routes = [
         path: '/estimation-edit',
         name: 'EstimationEdit',
         component: EstimationEdit,
+      },
+      {
+        path: '/estimation-category-edit',
+        name: 'EstimationCategoryEdit',
+        component: EstimationCategoryEdit,
       },
     ],
   },
