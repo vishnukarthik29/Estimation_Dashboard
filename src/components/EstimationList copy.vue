@@ -146,6 +146,9 @@
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">Labour</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">Transport</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">PMC Safety</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">
+                  Adminstrative Cost
+                </th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700">Grand Total</th>
                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-700">Actions</th>
               </tr>
@@ -175,19 +178,22 @@
                   </span>
                 </td>
                 <td class="px-4 py-3 text-right text-gray-800">
-                  ₹{{ formatNumber(getMaterialAmount(calc)) }}
+                  ₹{{ formatNumber(calc.totalMaterialAmount) }}
                 </td>
                 <td class="px-4 py-3 text-right text-gray-800">
-                  ₹{{ formatNumber(calc.labourAmount) }}
+                  ₹{{ formatNumber(calc.totalLabourAmount) }}
                 </td>
                 <td class="px-4 py-3 text-right text-gray-800">
                   ₹{{ formatNumber(calc.transportAmount) }}
                 </td>
                 <td class="px-4 py-3 text-right text-gray-800">
-                  ₹{{ formatNumber(calculatePMCSafety(calc)) }}
+                  ₹{{ formatNumber(calc.pmcSafetyAmount) }}
+                </td>
+                <td class="px-4 py-3 text-right text-gray-800">
+                  ₹{{ formatNumber(calc.adminCostAmount) }}
                 </td>
                 <td class="px-4 py-3 text-right font-semibold text-blue-600">
-                  ₹{{ formatNumber(calculateGrandTotal(calc)) }}
+                  ₹{{ formatNumber(calc.grandTotal) }}
                 </td>
                 <td class="px-4 py-3 text-center">
                   <div class="flex items-center justify-center gap-2">
@@ -258,7 +264,7 @@
     <!-- View Details Modal -->
     <div
       v-if="showDetailsModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 z-50 p-4 flex items-center justify-center bg-black/30 backdrop-blur-lg backdrop-saturate-150"
     >
       <div class="bg-white rounded shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div class="sticky top-0 bg-white border-b border-gray-300 px-6 py-4">
@@ -296,7 +302,7 @@
                   getSubcategoryName(selectedCalculation.subcategoryId)
                 }}</span>
               </div>
-              <div>
+              <div class="col-span-2">
                 <span class="text-gray-600">Specification:</span>
                 <span class="ml-2 font-medium text-gray-800">{{
                   getSpecName(selectedCalculation.specId)
@@ -351,7 +357,60 @@
                     <td class="px-3 py-2 text-center text-gray-800">{{ line.uom }}</td>
                     <td class="px-3 py-2 text-right text-gray-800">₹{{ line.rate.toFixed(2) }}</td>
                     <td class="px-3 py-2 text-right font-medium text-gray-800">
-                      ₹{{ (line.quantity * line.rate).toFixed(2) }}
+                      ₹{{ line.amount.toFixed(2) }}
+                    </td>
+                  </tr>
+                  <tr class="bg-gray-50 font-medium">
+                    <td colspan="4" class="px-3 py-2 text-right text-gray-700">Total Materials:</td>
+                    <td class="px-3 py-2 text-right text-gray-800">
+                      ₹{{ formatNumber(selectedCalculation.totalMaterialAmount) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Labour Line Items -->
+          <div
+            v-if="
+              selectedCalculation.labourCalculationMode === 'calculated' &&
+              selectedCalculation.labourLines?.length > 0
+            "
+            class="mb-6"
+          >
+            <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">
+              Labour Line Items
+            </h4>
+            <div class="border border-gray-300 rounded overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-100 border-b border-gray-300">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-700">
+                      Description
+                    </th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-700">Quantity</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-700">Rate</th>
+                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-700">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(line, index) in selectedCalculation.labourLines"
+                    :key="index"
+                    class="border-b border-gray-200"
+                  >
+                    <td class="px-3 py-2 text-gray-800">{{ line.description }}</td>
+                    <td class="px-3 py-2 text-right text-gray-800">{{ line.quantity }}</td>
+                    <td class="px-3 py-2 text-right text-gray-800">₹{{ line.rate.toFixed(2) }}</td>
+                    <td class="px-3 py-2 text-right font-medium text-gray-800">
+                      ₹{{ line.amount.toFixed(2) }}
+                    </td>
+                  </tr>
+                  <tr class="bg-gray-50 font-medium">
+                    <td colspan="3" class="px-3 py-2 text-right text-gray-700">Total Labour:</td>
+                    <td class="px-3 py-2 text-right text-gray-800">
+                      ₹{{ formatNumber(selectedCalculation.totalLabourAmount) }}
                     </td>
                   </tr>
                 </tbody>
@@ -375,13 +434,20 @@
                   }}
                 </span>
                 <span class="font-medium text-gray-800"
-                  >₹{{ formatNumber(getMaterialAmount(selectedCalculation)) }}</span
+                  >₹{{ formatNumber(selectedCalculation.totalMaterialAmount) }}</span
                 >
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600">Labour:</span>
+                <span class="text-gray-600">
+                  Labour
+                  {{
+                    selectedCalculation.labourCalculationMode === 'manual'
+                      ? '(Manual):'
+                      : '(Calculated):'
+                  }}
+                </span>
                 <span class="font-medium text-gray-800"
-                  >₹{{ formatNumber(selectedCalculation.labourAmount) }}</span
+                  >₹{{ formatNumber(selectedCalculation.totalLabourAmount) }}</span
                 >
               </div>
               <div class="flex justify-between">
@@ -390,20 +456,40 @@
                   >₹{{ formatNumber(selectedCalculation.transportAmount) }}</span
                 >
               </div>
-              <div class="border-t border-gray-300 pt-2 flex justify-between">
+              <div class="border-t border-gray-300 pt-2 flex justify-between text-xs text-gray-500">
+                <span>Subtotal (for PMC Safety calc):</span>
+                <span>₹{{ formatNumber(selectedCalculation.subtotalForPMC) }}</span>
+              </div>
+              <div class="flex justify-between">
                 <span class="text-gray-600"
                   >PMC Safety ({{ selectedCalculation.pmcSafetyPercentage }}%):</span
                 >
                 <span class="font-medium text-gray-800"
-                  >₹{{ formatNumber(calculatePMCSafety(selectedCalculation)) }}</span
+                  >₹{{ formatNumber(selectedCalculation.pmcSafetyAmount) }}</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600"
+                  >Adminstrative Cost ({{ selectedCalculation.adminCostPercentage }}%):</span
+                >
+                <span class="font-medium text-gray-800"
+                  >₹{{ formatNumber(selectedCalculation.adminCostAmount) }}</span
                 >
               </div>
               <div class="border-t border-gray-300 mt-3 pt-3 flex justify-between">
                 <span class="font-semibold text-gray-800">Grand Total:</span>
                 <span class="font-bold text-lg text-blue-600"
-                  >₹{{ formatNumber(calculateGrandTotal(selectedCalculation)) }}</span
+                  >₹{{ formatNumber(selectedCalculation.grandTotal) }}</span
                 >
               </div>
+            </div>
+          </div>
+
+          <!-- Notes Section -->
+          <div v-if="selectedCalculation.notes" class="mt-6">
+            <h4 class="text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">Notes</h4>
+            <div class="bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700">
+              {{ selectedCalculation.notes }}
             </div>
           </div>
         </div>
@@ -547,33 +633,6 @@ export default {
         type: '',
       }
       this.fetchCalculations()
-    },
-
-    // ==========================================
-    // CALCULATION METHODS
-    // ==========================================
-    getMaterialAmount(calc) {
-      if (calc.materialCalculationMode === 'manual') {
-        return calc.manualMaterialAmount || 0
-      }
-      return (
-        calc.materialLines?.reduce(
-          (sum, line) => sum + (line.quantity || 0) * (line.rate || 0),
-          0,
-        ) || 0
-      )
-    },
-
-    calculatePMCSafety(calc) {
-      const subtotal =
-        this.getMaterialAmount(calc) + (calc.labourAmount || 0) + (calc.transportAmount || 0)
-      return (subtotal * (calc.pmcSafetyPercentage || 0)) / 100
-    },
-
-    calculateGrandTotal(calc) {
-      const subtotal =
-        this.getMaterialAmount(calc) + (calc.labourAmount || 0) + (calc.transportAmount || 0)
-      return subtotal + this.calculatePMCSafety(calc)
     },
 
     // ==========================================

@@ -492,6 +492,54 @@
               {{ selectedCalculation.notes }}
             </div>
           </div>
+          <!-- Margin Calculator -->
+          <div class="mt-4 bg-white border border-gray-200 rounded p-4">
+            <h4 class="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">
+              Margin Calculator
+            </h4>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3">
+                <label class="text-sm text-gray-600 whitespace-nowrap">Margin %:</label>
+                <input
+                  v-model.number="marginPercentage"
+                  @input="calculateMarginAmount"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="Enter margin %"
+                />
+              </div>
+
+              <div class="flex justify-between items-center text-sm bg-gray-50 px-3 py-2 rounded">
+                <span class="text-gray-600">Margin Amount:</span>
+                <span class="font-medium text-gray-800">₹{{ formatNumber(marginAmount) }}</span>
+              </div>
+
+              <div class="flex justify-between items-center border-t border-gray-300 pt-3">
+                <span class="font-semibold text-gray-800">Total with Margin:</span>
+                <span class="font-bold text-lg text-green-600"
+                  >₹{{ formatNumber(totalWithMargin) }}</span
+                >
+              </div>
+
+              <button
+                @click="copyTotalToClipboard"
+                class="w-full px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+                {{ copyButtonText }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="border-t border-gray-300 px-6 py-4 flex justify-end">
@@ -533,6 +581,11 @@ export default {
       loading: false,
       showDetailsModal: false,
       selectedCalculation: null,
+      // Margin Calculator - ADD THESE LINES
+      marginPercentage: 20,
+      marginAmount: 0,
+      totalWithMargin: 0,
+      copyButtonText: 'Copy Amount',
     }
   },
 
@@ -655,12 +708,50 @@ export default {
     // ==========================================
     viewCalculation(calc) {
       this.selectedCalculation = calc
+      this.marginPercentage = 20 // CHANGE FROM 0 TO 20
+
+      // Calculate initial margin amount with 20%
+      const grandTotal = calc.grandTotal || 0
+      this.marginAmount = (grandTotal * 20) / 100
+      this.totalWithMargin = grandTotal + this.marginAmount
+
+      this.copyButtonText = 'Copy Amount'
       this.showDetailsModal = true
     },
 
     closeDetailsModal() {
       this.showDetailsModal = false
       this.selectedCalculation = null
+      this.marginPercentage = 20 // CHANGE FROM 0 TO 20
+      this.marginAmount = 0
+      this.totalWithMargin = 0
+      this.copyButtonText = 'Copy Amount'
+    },
+    calculateMarginAmount() {
+      if (!this.selectedCalculation) return
+
+      const grandTotal = this.selectedCalculation.grandTotal || 0
+      this.marginAmount = (grandTotal * this.marginPercentage) / 100
+      this.totalWithMargin = grandTotal + this.marginAmount
+    },
+
+    async copyTotalToClipboard() {
+      try {
+        const amount = this.totalWithMargin.toFixed(2)
+        await navigator.clipboard.writeText(amount)
+        this.copyButtonText = 'Copied!'
+
+        setTimeout(() => {
+          this.copyButtonText = 'Copy Amount'
+        }, 2000)
+      } catch (error) {
+        console.error('Failed to copy:', error)
+        this.copyButtonText = 'Failed to copy'
+
+        setTimeout(() => {
+          this.copyButtonText = 'Copy Amount'
+        }, 2000)
+      }
     },
 
     async deleteCalculation(id) {
